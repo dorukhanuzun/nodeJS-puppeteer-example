@@ -8,13 +8,13 @@ exports.index = async (req, res) => {
   const products = await Product.find();
   
   res.render('products/index', {
-    pageTitle: 'BBY Products',
+    pageTitle: 'AM4Z0N Products',
     products
   });
 };
 
 exports.update = async (req, res) => {
-  const url = 'https://www.bestbuy.ca/en-ca/collection/4k-ultra-hd-tvs/33064';
+  const url = 'https://www.amazon.ca/gp/new-releases/pet-supplies/6291911011?ref_=Oct_s9_apbd_onr_hd_bw_b6roDTf_S&pf_rd_r=NRDBCY3MNPAVRS4T474F&pf_rd_p=d54a3cbe-eb56-5564-8e0c-e1eaddec8c8e&pf_rd_s=merchandised-search-10&pf_rd_t=BROWSE&pf_rd_i=6291911011';
   const products = await scrapeIt(url);
 
   console.log(products);
@@ -57,17 +57,18 @@ async function scrapeIt (url) {
   // Navigate to the URL
   await page.goto(url);
   await sleep(2);
-  await page.screenshot({path: 'screenshots/example.png'});
+  // await page.screenshot({path: 'assets/screenshots/example.png'});
   
   await page.evaluate(async () => {
     window.scrollBy(0, document.body.scrollHeight);
     await sleep(2);
   });
-  await page.waitForSelector(`[class^="productImageContainer"]`, {visible: true, timeout: 120});
+  await page.waitForSelector(`[id^="zg-ordered-list"]`, {visible: true, timeout: 120});
 
   // Run some JavaScript on the page
   const content = await page.evaluate(async () => {
-    const productScrape = document.querySelectorAll('.x-productListItem');
+    const productScrape = document.querySelectorAll('.zg-item-immersion');
+    console.log(productScrape);
     const products = [];
 
     for (let product of productScrape) {
@@ -77,12 +78,12 @@ async function scrapeIt (url) {
       }
 
       // Get the SKU
-      const link = product.querySelector('a').href;
+      const link = product.querySelector(`[class^="a-link-normal"]`).href;
       const parts = link.split('/');
-      const sku = parts[parts.length - 1];
+      const sku = parts[parts.length - 3];
 
-      const title = product.querySelector(`[class^="productItemName"]`).textContent;
-      const price = product.querySelector(`meta[itemprop="price"]`).content;
+      const title = product.querySelector(`[class^="p13n-sc-truncate"]`).title;
+      const price = product.querySelector(`[class^="p13n-sc-price"]`).textContent;
       const image = product.querySelector('img');
       let src = null;
       if (image) src = image.src;
